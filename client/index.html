@@ -9,7 +9,7 @@
 
     <div id='user_access'>
         <form id="login">
-            <input type='text' placeholder='Insert your nickname' name='nickname' id='nickname' />
+            <input type='text' placeholder='Insert your nick' name='nick' id='nick' />
             <input type='submit' value='Login' />
         </form>
     </div>
@@ -40,6 +40,28 @@
             var formatted_message = $("<p />").text(data);
             $("#history_messages").append(formatted_message);
         });
+
+        $("form#login").submit(function(e){
+            e.preventDefault();
+            socket.emit("login", $(this).find("#nick").val(), function(valido){
+                if(valido){
+                    $("#user_access").hide();
+                    $("#chat_room").show();
+                }else{
+                    $("#user_access").val("");
+                    alert("Nick already used on chat room");
+                }
+            });
+        });
+
+        socket.on("update users", function(users){
+            $("#users_list").empty();
+            $("#users_list").append("<option value=''>All</option>");
+                $.each(users, function(index){
+                    var user_op = $("<option />").text(users[index]);
+                    $("#users_list").append(user_op);
+                });
+            });
     </script>
 </body>
 </html>

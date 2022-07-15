@@ -43,9 +43,21 @@ function getActualDate(){
 }
 
 io.on("connection", function(socket){
+    socket.on("login", function(nick, callback){
+        if(!(nick in users)){
+             socket.nick = nick;
+             users[nick] = socket;
+
+             io.sockets.emit("update users", Object.keys(users));
+             io.sockets.emit("update messages", "[ " + getActualDate() + " ] " + nick + " entered the room!");
+
+             callback(true);
+        }else{
+             callback(false);
+        }
+    });
     socket.on("send message", function(message_sent, callback){
-        message_sent = "[ " + getActualDate() + " ]: " + message_sent;
-        console.log(message_sent)
+        message_sent = "[ " + getActualDate() + " ] " + socket.nick + " says: " + message_sent;
         io.sockets.emit("update messages", message_sent);
         callback();
     });
