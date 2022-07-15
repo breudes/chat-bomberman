@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+     <title>Chat - Bomberman</title>
+     <link rel="stylesheet" type="text/css" href="\css\style.css" />
+</head>
+<body>
+    <select multiple="multiple" id='users_list'><option value=''>All</option></select>
+
+    <div id='user_access'>
+        <form id="login">
+            <input type='text' placeholder='Insert your nickname' name='nickname' id='nickname' />
+            <input type='submit' value='Login' />
+        </form>
+    </div>
+
+    <div id='chat_room'>
+        <div id="history_messages"></div>
+        <form id="chat">
+            <input type='text' id='message_text' name='message_text' />
+            <input type='submit' value='Send message' />
+        </form>
+    </div>
+
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+
+     <script type="text/javascript">
+        var socket = io.connect();
+
+         $("form#chat").submit(function(e){
+              e.preventDefault();
+              socket.emit("send message", $(this).find("#message_text").val(), function(){
+                   $("form#chat_room #message_text").val("");
+              });
+         });
+
+        socket.on("update messages", function(data){
+            console.log(data)
+            var formatted_message = $("<p />").text(data);
+            $("#history_messages").append(formatted_message);
+        });
+    </script>
+</body>
+</html>
