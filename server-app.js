@@ -6,6 +6,7 @@ app.listen(3000);
 console.log("Chat initialized...");
 
 var users = [];
+var messages = [];
 
 function response (req, res) {
      var file = "";
@@ -43,10 +44,44 @@ function getActualDate(){
 }
 
 io.on("connection", function(socket){
-    socket.on("send message", function(message_sent, callback){
-        message_sent = "[ " + getActualDate() + " ]: " + message_sent;
-        console.log(message_sent)
-        io.sockets.emit("update messages", message_sent);
+    socket.on("login", function(nick, callback){
+        if(!(nick in users)){
+             socket.nick = nick;
+             users[nick] = socket;
+
+             io.sockets.emit("update users", Object.keys(users));
+             var message_object = {message: "[ " + getActualDate() + " ] " + socket.nick + " entered the room!", type: 'system'}
+
+             io.sockets.emit("update messages", message_object);
+             messages.push(message_object);
+
+             callback(true);
+        }else{
+             callback(false);
+        }
+    });
+    socket.on("send message", function(data, callback){
+        var message_sent = data.message;
+        var user = data.user;
+        if(user == null)
+            user = '';
+        message_sent = "[ " + getActualDate() + " ] " + socket.nick + " says: " + message_sent;
+
+        if(user == ''){
+                io.sockets.emit("update messages", {message: message_sent, type:''});
+                messages.push({message: message_sent, type:''});
+        }else{
+                socket.emit("update messages", {message: message_sent, type:'private'});
+                users[user].emit("update messages", {message: message_sent, type:'private'});
+        }
+
         callback();
+    });
+
+    socket.on("disconnect", function(){
+        delete users[socket.nick];
+        io.sockets.emit("update users", Object.keys(users));
+        io.sockets.emit("update messages", {message: "[ " + getActualDate() + " ] " + socket.nick + " left the room!", type: 'system'});
+        messages.push({message: "[ " + getActualDate() + " ] " + socket.nick + " left the room!", type: 'system'});
     });
 });
